@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 // Replace with your actual auth import:
 // import { getServerSession } from 'next-auth';
@@ -37,18 +38,18 @@ export default async function SettingsPage() {
   if (!settings) {
     settings = {
       id: 'current',
-      salesPricePerUnit: 0,
-      maintenanceReservePerUnit: 0,
-      laborRate: 0,
-      cementUnitCost: 0,
-      sandUnitCost: 0,
-      dieselUnitCost: 0,
-      cementConversionFactor: 50, // sensible default
-      sandConversionFactor: 100,
-      dieselConversionFactor: 3.785,
-      cementRatio: 0.02,
-      sandRatio: 0.001,
-      dieselRatio: 0.005,
+      salesPricePerUnit: new Prisma.Decimal(0),
+      maintenanceReservePerUnit: new Prisma.Decimal(0),
+      laborRate: new Prisma.Decimal(0),
+      cementUnitCost: new Prisma.Decimal(0),
+      sandUnitCost: new Prisma.Decimal(0),
+      dieselUnitCost: new Prisma.Decimal(0),
+      cementConversionFactor: new Prisma.Decimal(50), // sensible default
+      sandConversionFactor: new Prisma.Decimal(100),
+      dieselConversionFactor: new Prisma.Decimal(3.785),
+      cementRatio: new Prisma.Decimal(0.02),
+      sandRatio: new Prisma.Decimal(0.001),
+      dieselRatio: new Prisma.Decimal(0.005),
       updatedById: '',
       updatedAt: new Date(),
     };
@@ -56,8 +57,8 @@ export default async function SettingsPage() {
 
   // Convert Prisma Decimal fields to plain numbers for the client.
   const serialized = {
-    salesPricePerUnit: settings.salesPricePerUnit,
-    maintenanceReservePerUnit: settings.maintenanceReservePerUnit,
+    salesPricePerUnit: settings.salesPricePerUnit.toNumber(),
+    maintenanceReservePerUnit: settings.maintenanceReservePerUnit.toNumber(),
     laborRate: settings.laborRate.toNumber(),
     cementUnitCost: settings.cementUnitCost.toNumber(),
     sandUnitCost: settings.sandUnitCost.toNumber(),

@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "@/lib/db";
+import { prisma } from '@/lib/prisma';
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -258,7 +258,7 @@ export async function softDeleteSale(
 
   // 2. Customer ရဲ့ balance ကို ပြန်နုတ်ပေးရန် (Balance Reversal)
 // မှတ်ချက် - BalanceDue ပမာဏကိုပဲ ပြန်နုတ်ပေးရပါမယ် (ဘာလို့ဆို ပေးပြီးသားပမာဏက ငွေထဲဝင်သွားပြီမို့လို့ပါ)
-if (existing.balanceDue > 0) {
+if (existing.balanceDue.gt(0)) {
   await tx.customer.update({
     where: { id: existing.customerId },
     data: {
@@ -280,6 +280,7 @@ await tx.auditLog.create({
     }),
   },
 });
+  });
 
     revalidatePath("/sales");
     return { success: true, data: undefined, message: "Sale deleted successfully." };

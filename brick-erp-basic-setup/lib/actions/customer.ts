@@ -1,6 +1,6 @@
 'use server';
 
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import type { Prisma } from '@prisma/client';
@@ -178,7 +178,7 @@ export async function softDeleteCustomer(
     if (!existing || existing.deletedAt) {
       return { success: false, error: 'Customer not found.' };
     }
-    if (existing.currentBalance > 0) {
+    if (existing.currentBalance.gt(0)) {
       return {
         success: false,
         error:

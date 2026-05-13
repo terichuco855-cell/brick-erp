@@ -18,7 +18,7 @@ interface ProductionLogItem {
   bricksProduced: number;
   netYield: number;
   totalCost: number;
-  productionDate: string;
+  productionDate: string | Date;
 }
 
 interface Props {

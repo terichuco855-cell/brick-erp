@@ -47,7 +47,7 @@ const settingsSchema = z.object({
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
 interface Props {
-  settings: ReturnType<typeof serializeSettings>; // plain numbers
+  settings: SerializedSettings; // plain numbers
 }
 
 // Helper type for settings passed from server page (all numbers)

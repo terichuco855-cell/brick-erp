@@ -1,6 +1,6 @@
 // app/(dashboard)/production/page.tsx
 import { prisma } from '@/lib/prisma';
-import { ProductionLog, User, GlobalSettings } from '@prisma/client';
+import { ProductionLog, User } from '@prisma/client';
 import { ProductionList } from './production-list';
 import { ProductionForm } from './production-form';
 import { DailyProductionChart } from '@/components/production/daily-production-chart';
@@ -59,9 +59,21 @@ export default async function ProductionPage({
   const settings = await prisma.globalSettings.findUnique({
     where: { id: 'current' },
   });
-  if (!settings) return <div>Settings not found. Please configure first.</div>;
 
-  // Serialization (same)
+  const defaultSettings = {
+    salesPricePerUnit: 0,
+    maintenanceReservePerUnit: 0,
+    laborRate: 0,
+    cementUnitCost: 0,
+    sandUnitCost: 0,
+    dieselUnitCost: 0,
+    cementRatio: 0.02,
+    sandRatio: 0.001,
+    dieselRatio: 0.005,
+  };
+
+  const settingsMissing = !settings;
+
   const serializedLogs = logs.map((log) => ({
     id: log.id,
     worker: log.worker,
@@ -76,11 +88,33 @@ export default async function ProductionPage({
     sandCostAtTime: log.sandCostAtTime.toNumber(),
     dieselCostAtTime: log.dieselCostAtTime.toNumber(),
     totalCost: log.totalCost.toNumber(),
-    productionDate: log.productionDate.toISOString(),
+    productionDate: log.productionDate,
   }));
 
   const serializedSettings = {
-    /* ... same ... */
+    salesPricePerUnit: settings
+      ? settings.salesPricePerUnit.toNumber()
+      : defaultSettings.salesPricePerUnit,
+    maintenanceReservePerUnit: settings
+      ? settings.maintenanceReservePerUnit.toNumber()
+      : defaultSettings.maintenanceReservePerUnit,
+    laborRate: settings ? settings.laborRate.toNumber() : defaultSettings.laborRate,
+    cementUnitCost: settings
+      ? settings.cementUnitCost.toNumber()
+      : defaultSettings.cementUnitCost,
+    sandUnitCost: settings
+      ? settings.sandUnitCost.toNumber()
+      : defaultSettings.sandUnitCost,
+    dieselUnitCost: settings
+      ? settings.dieselUnitCost.toNumber()
+      : defaultSettings.dieselUnitCost,
+    cementRatio: settings
+      ? settings.cementRatio.toNumber()
+      : defaultSettings.cementRatio,
+    sandRatio: settings ? settings.sandRatio.toNumber() : defaultSettings.sandRatio,
+    dieselRatio: settings
+      ? settings.dieselRatio.toNumber()
+      : defaultSettings.dieselRatio,
   };
 
   const workers = await prisma.user.findMany({
@@ -104,6 +138,13 @@ export default async function ProductionPage({
           currentUser={{ id: session.id, role: session.role }}
         />
       </div>
+
+      {settingsMissing && (
+        <div className="rounded-md border border-yellow-300 bg-yellow-50 p-4 text-yellow-900">
+          Global settings are not configured yet. Production calculations will use fallback values.
+          Please configure settings in the Settings page for accurate cost estimates.
+        </div>
+      )}
 
       {/* Filter bar */}
       <FilterBar
