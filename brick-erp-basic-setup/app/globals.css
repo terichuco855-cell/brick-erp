@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Brick Factory Theme */
+    --background: 30 47% 95%;
+    --foreground: 15 64% 18%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 15 64% 18%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 15 64% 18%;
+
+    --primary: 14 64% 36%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 28 44% 88%;
+    --secondary-foreground: 14 64% 30%;
+
+    --muted: 28 30% 92%;
+    --muted-foreground: 14 20% 45%;
+
+    --accent: 17 64% 67%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 28 25% 82%;
+    --input: 28 25% 82%;
+    --ring: 14 64% 36%;
+
+    --chart-1: 14 64% 36%;
+    --chart-2: 17 64% 67%;
+    --chart-3: 28 44% 60%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 0 72% 51%;
+
+    --radius: 0.5rem;
+
+    --sidebar-bg: 14 64% 28%;
+    --sidebar-fg: 30 47% 95%;
+    --sidebar-active-bg: 14 64% 20%;
+    --sidebar-hover-bg: 14 64% 24%;
+    --sidebar-border: 14 64% 23%;
+    --sidebar-muted: 14 30% 70%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: hsl(var(--sidebar-hover-bg));
+  border-radius: 4px;
+}

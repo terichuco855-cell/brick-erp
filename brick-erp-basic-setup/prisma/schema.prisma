@@ -1,0 +1,243 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+  engineType = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Enums ---
+
+enum Role {
+  ADMIN
+  WORKER
+}
+
+enum PaymentStatus {
+  CASH
+  CREDIT
+  PARTIAL
+}
+
+enum MaterialType {
+  CEMENT
+  SAND
+  DIESEL
+  BRICK // Finished Good
+}
+
+enum TransactionType {
+  PURCHASE // ကုန်ကြမ်းဝယ်ယူခြင်း
+  PRODUCTION // ထုတ်လုပ်ခြင်း
+  SALE // ရောင်းချခြင်း
+  ADJUSTMENT // စာရင်းညှိခြင်း
+}
+
+// --- Models ---
+
+model User {
+  id       String  @id @default(cuid())
+  name     String?
+  email    String  @unique
+  password String
+  role     Role    @default(WORKER)
+
+  productionLogs  ProductionLog[]
+  settingsUpdated GlobalSettings[]      @relation("SettingsUpdater")
+  adjustments     InventoryAdjustment[]
+  purchases       PurchaseOrder[] // ကုန်ကြမ်းဝယ်ယူမှုကို မှတ်တမ်းတင်သူ
+  auditLogs       AuditLog[]
+  sales           Sale[]                @relation("UserSales")
+  isActive        Boolean               @default(true) // Soft delete for user
+  createdAt       DateTime              @default(now())
+}
+
+model GlobalSettings {
+  id String @id @default("current")
+
+  // ── Pricing ──────────────────────────────────────────
+  salesPricePerUnit         Decimal @db.Decimal(10, 2) // brick selling price
+  maintenanceReservePerUnit Decimal @default(0) @db.Decimal(10, 2)
+
+  // ── Labour ───────────────────────────────────────────
+  laborRate Decimal @db.Decimal(10, 2) // per brick
+
+  // ── Raw material unit costs (stored in BASE units) ───
+  cementUnitCost Decimal @db.Decimal(10, 2) // per kg
+  sandUnitCost   Decimal @db.Decimal(10, 2) // per bucket (ပုံး)
+  dieselUnitCost Decimal @db.Decimal(10, 2) // per liter
+
+  // ── Conversion factors (purchase → base) ─────────────
+  // Kept here so Admins can update them without a DB migration
+  cementConversionFactor Decimal @default(50) @db.Decimal(10, 4)
+  // 1 bag     = 50 kg
+  sandConversionFactor   Decimal @default(100) @db.Decimal(10, 4)
+  // 1 ကျင်း  = 100 ပုံး (buckets)
+  dieselConversionFactor Decimal @default(3.785) @db.Decimal(10, 4)
+  // 1 gallon  = 3.785 liters
+
+  // ── Production ratios (consumption per brick) ─────────
+  cementRatio Decimal @default(0.02) @db.Decimal(10, 6)
+  // kg per brick
+  sandRatio   Decimal @default(0.001) @db.Decimal(10, 6)
+  // buckets (ပုံး) per brick — base unit for sand
+  dieselRatio Decimal @default(0.005) @db.Decimal(10, 6)
+  // liters per brick
+
+  updatedBy   User     @relation("SettingsUpdater", fields: [updatedById], references: [id])
+  updatedById String
+  updatedAt   DateTime @updatedAt
+}
+
+model Inventory {
+  id           String       @id @default(cuid())
+  materialType MaterialType @unique
+  quantity     Decimal      @default(0) @db.Decimal(15, 2)
+
+  baseUnit         String // ဥပမာ - kg, liter, piece
+  purchaseUnit     String // ဥပမာ - bag, truck, gallon
+  conversionFactor Decimal @default(1) @db.Decimal(10, 2)
+
+  minStockLevel Decimal  @default(0) @db.Decimal(15, 2)
+  updatedAt     DateTime @updatedAt
+}
+
+model Supplier {
+  id        String          @id @default(cuid())
+  name      String
+  phone     String          @unique
+  address   String?
+  purchases PurchaseOrder[]
+  createdAt DateTime        @default(now())
+  deletedAt DateTime? // Soft delete
+}
+
+model PurchaseOrder {
+  id           String       @id @default(cuid())
+  supplier     Supplier     @relation(fields: [supplierId], references: [id])
+  supplierId   String
+  materialType MaterialType
+
+  orderQuantity Decimal @db.Decimal(15, 2) // Purchase Unit ဖြင့် (ဥပမာ - ၁၀ အိတ်)
+  unitPrice     Decimal @db.Decimal(15, 2)
+  totalAmount   Decimal @db.Decimal(15, 2)
+
+  receivedBy   User     @relation(fields: [receivedById], references: [id])
+  receivedById String
+  purchaseDate DateTime @default(now())
+}
+
+model ProductionLog {
+  id       String @id @default(cuid())
+  worker   User   @relation(fields: [workerId], references: [id])
+  workerId String
+
+  bricksProduced Int
+  wastageCount   Int @default(0)
+  netYield       Int
+
+  cementUsed Decimal @db.Decimal(10, 2)
+  sandUsed   Decimal @db.Decimal(10, 2)
+  dieselUsed Decimal @db.Decimal(10, 2)
+
+  // Snapshot
+  laborRateAtTime  Decimal @db.Decimal(10, 2)
+  cementCostAtTime Decimal @db.Decimal(10, 2)
+  sandCostAtTime   Decimal @db.Decimal(10, 2)
+  dieselCostAtTime Decimal @db.Decimal(10, 2)
+
+  totalCost      Decimal  @db.Decimal(15, 2)
+  productionDate DateTime @default(now())
+
+  @@index([productionDate])
+}
+
+model Customer {
+  id             String           @id @default(cuid())
+  name           String
+  phone          String           @unique
+  address        String?
+  currentBalance Decimal          @default(0) @db.Decimal(15, 2)
+  sales          Sale[]
+  payments       PaymentReceipt[]
+  deletedAt      DateTime? // Soft delete
+}
+
+model Sale {
+  id               String        @id @default(cuid())
+  customer         Customer      @relation(fields: [customerId], references: [id])
+  customerId       String
+  quantity         Int
+  salesPriceAtTime Decimal       @db.Decimal(10, 2)
+  totalAmount      Decimal       @db.Decimal(15, 2)
+  amountPaid       Decimal       @db.Decimal(15, 2) // Total amount paid for THIS sale
+  balanceDue       Decimal       @db.Decimal(15, 2) // Remaining balance for THIS sale
+  paymentStatus    PaymentStatus @default(CASH)
+  saleDate         DateTime      @default(now())
+  deletedAt        DateTime?
+
+  // New Relation: အရောင်းဘောက်ချာ တစ်ခုအတွက် ပေးချေမှုမှတ်တမ်းများ
+  payments PaymentReceipt[]
+
+  createdBy   User   @relation("UserSales", fields: [createdById], references: [id])
+  createdById String
+
+  @@index([saleDate])
+  @@index([customerId])
+  @@index([paymentStatus])
+}
+
+model PaymentReceipt {
+  id         String   @id @default(cuid())
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId String
+
+  // New Relation: ဘယ်အရောင်းဘောက်ချာအတွက် ပေးတာလဲ (Optional ဖြစ်ထားနိုင်ပါတယ် - အကြွေးဟောင်းလာဆပ်တာမျိုးအတွက်)
+  sale   Sale?   @relation(fields: [saleId], references: [id])
+  saleId String?
+
+  amountPaid  Decimal   @db.Decimal(15, 2)
+  paymentDate DateTime  @default(now())
+  note        String?
+  deletedAt   DateTime?
+
+  @@index([paymentDate])
+  @@index([customerId])
+}
+
+model Expense {
+  id          String    @id @default(cuid())
+  category    String
+  amount      Decimal   @db.Decimal(15, 2)
+  description String?
+  date        DateTime  @default(now())
+  deletedAt   DateTime? // Soft delete
+}
+
+model InventoryAdjustment {
+  id           String       @id @default(cuid())
+  materialType MaterialType
+  diffQuantity Decimal      @db.Decimal(15, 2)
+  reason       String?
+  updatedBy    User         @relation(fields: [userId], references: [id])
+  userId       String
+  createdAt    DateTime     @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  action    String // "CREATE", "UPDATE", "DELETE"
+  entity    String // "SALE", "PURCHASE", "PRODUCTION"
+  entityId  String?
+  details   String? // JSON string format
+  createdAt DateTime @default(now())
+
+  @@index([entity])
+  @@index([createdAt])
+}
