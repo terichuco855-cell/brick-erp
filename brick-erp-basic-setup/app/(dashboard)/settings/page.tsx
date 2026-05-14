@@ -1,5 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { PageShell } from '@/components/layout/page-shell';
+
 // Replace with your actual auth import:
 // import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
@@ -71,5 +73,9 @@ export default async function SettingsPage() {
     dieselRatio: settings.dieselRatio.toNumber(),
   };
 
-  return <SettingsForm settings={serialized} />;
+  return (
+    <PageShell title="Settings" subtitle="Configure global settings for your brick factory">
+      <SettingsForm settings={serialized} />
+    </PageShell>
+  );
 }

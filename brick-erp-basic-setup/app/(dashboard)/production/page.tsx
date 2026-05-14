@@ -1,5 +1,7 @@
 // app/(dashboard)/production/page.tsx
 import { prisma } from '@/lib/prisma';
+import { PageShell } from '@/components/layout/page-shell';
+
 import { ProductionLog, User } from '@prisma/client';
 import { ProductionList } from './production-list';
 import { ProductionForm } from './production-form';
@@ -123,11 +125,12 @@ export default async function ProductionPage({
   });
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
-      {/* Header with form */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Production Log</h1>
+    <PageShell title="Production Logs" subtitle="Record and review daily brick production">
+      <div className="p-6 space-y-6 max-w-7xl mx-auto">
+        {/* Header with form */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Production Log</h1>
           <p className="text-muted-foreground">
             Record daily brick production.
           </p>
@@ -160,5 +163,6 @@ export default async function ProductionPage({
       )}
       <ProductionList logs={serializedLogs} />
     </div>
+    </PageShell>
   );
 }
