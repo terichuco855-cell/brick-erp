@@ -125,7 +125,13 @@ export interface MaterialConsumption {
  * Calculate raw material consumption for a given brick count.
  * Returns amounts in BASE units (kg, buckets, liters).
  */
-export function calcMaterialConsumption(brickCount, settings) {
+export function calcMaterialConsumption(
+   brickCount: number,
+  settings: Pick<
+    GlobalSettingsData,
+    'cementRatio' | 'sandRatio' | 'dieselRatio'
+  >
+) {
   const n = dec(brickCount);
   return {
     cement: toNum(n.mul(dec(settings.cementRatio)), 6),
