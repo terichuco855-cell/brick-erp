@@ -77,6 +77,10 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "tsx": "^4.22.0",
     "typescript": "^6.0.3"
-  }
+  },
+ "prisma": {
+  "seed": "tsx prisma/seed.ts"
+}
 }

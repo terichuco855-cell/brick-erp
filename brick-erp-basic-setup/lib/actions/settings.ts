@@ -44,6 +44,7 @@ export async function updateGlobalSettings(
     const issues = parsed.error.issues
       .map((i) => `${i.path[0]}: ${i.message}`)
       .join(', ');
+      console.log('Validation failed:', parsed.error.format());
     return { success: false, updated: false, error: `Invalid data: ${issues}` };
   }
   const newValues = parsed.data;

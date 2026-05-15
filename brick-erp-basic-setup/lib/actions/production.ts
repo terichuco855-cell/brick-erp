@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { canProduce } from '@/lib/utils/erp-logic';
 import { Decimal } from 'decimal.js';
 
-console.log('DATABASE_URL:', process.env.DATABASE_URL);
+
 const productionSchema = z.object({
   workerId: z.string().min(1),
   bricksProduced: z.number().int().positive(),
@@ -19,9 +19,11 @@ const productionSchema = z.object({
 export async function createProductionLog(
   data: z.input<typeof productionSchema>
 ) {
+  console.log('createProductionLog called with data:', data);
   // 1. Validate
   const parsed = productionSchema.safeParse(data);
   if (!parsed.success) {
+    console.log('Validation failed:', parsed.error.format());
     return { success: false, error: 'Invalid data' };
   }
 
@@ -43,6 +45,7 @@ export async function createProductionLog(
     where: { id: 'current' },
   });
   if (!settings) {
+    console.log('Global settings not found');
     return { success: false, error: 'Global settings not configured.' };
   }
 

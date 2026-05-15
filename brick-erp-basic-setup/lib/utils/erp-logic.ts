@@ -8,8 +8,12 @@ Decimal.set({ precision: 20, rounding: Decimal.ROUND_HALF_UP });
 // ---------------------------------------------------------------
 // Helper: Convert a plain value to Decimal, multiply, return number
 // ---------------------------------------------------------------
+// lib/erp-logic.ts
 function dec(value: any): Decimal {
-  return new Decimal(value);
+  if (value === undefined || value === null || value === '') return new Decimal(0);
+  const num = Number(value);
+  if (isNaN(num)) return new Decimal(0);
+  return new Decimal(num);
 }
 
 /**

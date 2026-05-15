@@ -126,6 +126,7 @@ export function ProductionForm({ settings, workers, currentUser }: Props) {
     setIsSubmitting(true);
     try {
       const result = await createProductionLog(data);
+      alert("Production log created successfully!")
       if (result.success) {
         toast.success(
           `Production logged. Net yield: ${result.netYield} bricks.`
@@ -133,6 +134,7 @@ export function ProductionForm({ settings, workers, currentUser }: Props) {
         setOpen(false);
         form.reset();
       } else {
+        alert("Failed to create production log: "  );
         toast.error(result.error || 'Failed to log production.');
       }
     } catch (err) {

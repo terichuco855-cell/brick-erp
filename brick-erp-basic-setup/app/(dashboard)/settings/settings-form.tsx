@@ -97,9 +97,10 @@ export default function SettingsForm({ settings }: Props) {
     try {
       const result = await updateGlobalSettings(values);
       if (!result.success) {
+        alert("Failed to update settings: " );
         toast.error(result.error || 'Failed to save.');
       } else if (!result.updated) {
-        toast.message('No changes – settings are already up to date.');
+        alert("No changes – settings are already up to date.");
       } else {
         toast.success('Settings updated successfully.');
       }
