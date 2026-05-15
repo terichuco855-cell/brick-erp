@@ -125,18 +125,12 @@ export interface MaterialConsumption {
  * Calculate raw material consumption for a given brick count.
  * Returns amounts in BASE units (kg, buckets, liters).
  */
-export function calcMaterialConsumption(
-  brickCount: number,
-  settings: Pick<
-    GlobalSettingsData,
-    'cementRatio' | 'sandRatio' | 'dieselRatio'
-  >
-): MaterialConsumption {
+export function calcMaterialConsumption(brickCount, settings) {
   const n = dec(brickCount);
   return {
-    cement: toNum(n.mul(settings.cementRatio), 6),
-    sand: toNum(n.mul(settings.sandRatio), 6),
-    diesel: toNum(n.mul(settings.dieselRatio), 6),
+    cement: toNum(n.mul(dec(settings.cementRatio)), 6),
+    sand:   toNum(n.mul(dec(settings.sandRatio)), 6),
+    diesel: toNum(n.mul(dec(settings.dieselRatio)), 6),
   };
 }
 
@@ -182,28 +176,24 @@ export interface CostBreakdown {
 export function calcCostPerBrick(
   settings: Pick<
     GlobalSettingsData,
-    | 'cementRatio'
-    | 'sandRatio'
-    | 'dieselRatio'
-    | 'cementUnitCost'
-    | 'sandUnitCost'
-    | 'dieselUnitCost'
+    'cementRatio' | 'sandRatio' | 'dieselRatio'
+    | 'cementUnitCost' | 'sandUnitCost' | 'dieselUnitCost'
     | 'laborRate'
   >
 ): CostBreakdown {
-  const cementCost = dec(settings.cementRatio).mul(settings.cementUnitCost);
-  const sandCost = dec(settings.sandRatio).mul(settings.sandUnitCost);
-  const dieselCost = dec(settings.dieselRatio).mul(settings.dieselUnitCost);
-  const laborCost = dec(settings.laborRate);
+  const cementCost = dec(settings.cementRatio).mul(dec(settings.cementUnitCost));
+  const sandCost   = dec(settings.sandRatio).mul(dec(settings.sandUnitCost));
+  const dieselCost = dec(settings.dieselRatio).mul(dec(settings.dieselUnitCost));
+  const laborCost  = dec(settings.laborRate);
 
   const totalCost = cementCost.plus(sandCost).plus(dieselCost).plus(laborCost);
 
   return {
     cementCost: toNum(cementCost),
-    sandCost: toNum(sandCost),
+    sandCost:   toNum(sandCost),
     dieselCost: toNum(dieselCost),
-    laborCost: toNum(laborCost),
-    totalCost: toNum(totalCost),
+    laborCost:  toNum(laborCost),
+    totalCost:  toNum(totalCost),
   };
 }
 
@@ -231,10 +221,10 @@ export function calcActualProductionCost({
   dieselCostAtTime: number;
   laborRateAtTime: number;
 }): CostBreakdown {
-  const cementCost = dec(cementUsed).mul(cementCostAtTime);
-  const sandCost = dec(sandUsed).mul(sandCostAtTime);
-  const dieselCost = dec(dieselUsed).mul(dieselCostAtTime);
-  const laborCost = dec(bricksProduced).mul(laborRateAtTime);
+  const cementCost = dec(cementUsed).mul(dec(cementCostAtTime));
+  const sandCost   = dec(sandUsed).mul(dec(sandCostAtTime));
+  const dieselCost = dec(dieselUsed).mul(dec(dieselCostAtTime));
+  const laborCost  = dec(bricksProduced).mul(dec(laborRateAtTime));
   const totalCost = cementCost.plus(sandCost).plus(dieselCost).plus(laborCost);
 
   return {
@@ -277,7 +267,7 @@ export function calcProfitPerBrick(
     | 'laborRate'
   >
 ): ProfitBreakdown {
-  const { totalCost } = calcCostPerBrick(settings);
+   const { totalCost } = calcCostPerBrick(settings);
   const revenue = dec(settings.salesPricePerUnit);
   const reserve = dec(settings.maintenanceReservePerUnit);
   const grossProfit = revenue.minus(totalCost);
@@ -317,9 +307,9 @@ export function calcSaleProfit({
   netProfit: number;
 } {
   const qty = dec(quantity);
-  const revenue = qty.mul(salePricePerUnit);
-  const cost = qty.mul(actualCostPerBrick);
-  const reserve = qty.mul(maintenanceReservePerUnit);
+  const revenue = qty.mul(dec(salePricePerUnit));
+  const cost = qty.mul(dec(actualCostPerBrick));
+  const reserve = qty.mul(dec(maintenanceReservePerUnit));
   const net = revenue.minus(cost).minus(reserve);
   return {
     revenue: toNum(revenue),
@@ -497,20 +487,18 @@ export function calcBatchResult({
     ? (wastageCount / bricksProduced) * 100
     : 0;
 
-  const cementCost = dec(cementUsed).mul(cementCostAtTime);
-  const sandCost = dec(sandUsed).mul(sandCostAtTime);
-  const dieselCost = dec(dieselUsed).mul(dieselCostAtTime);
-  const laborCost = dec(bricksProduced).mul(laborRateAtTime);
-  const totalCost = cementCost.plus(sandCost).plus(dieselCost).plus(laborCost);
-  const costPerBrick = netYield ? toNum(totalCost.div(netYield), 6) : 0;
+  const cementCost = dec(cementUsed).mul(dec(cementCostAtTime));
+const sandCost   = dec(sandUsed).mul(dec(sandCostAtTime));
+const dieselCost = dec(dieselUsed).mul(dec(dieselCostAtTime));
+const laborCost  = dec(bricksProduced).mul(dec(laborRateAtTime));
+const totalCost  = cementCost.plus(sandCost).plus(dieselCost).plus(laborCost);
+const costPerBrick = netYield ? toNum(totalCost.div(dec(netYield)), 6) : 0;
 
-  const revenue = dec(netYield).mul(salesPriceAtTime);
-  const grossProfit = revenue.minus(totalCost);
-  const reserve = dec(netYield).mul(maintenanceReserveAtTime);
-  const netProfit = grossProfit.minus(reserve);
-  const marginPercent = revenue.gt(0)
-    ? netProfit.div(revenue).mul(100).toDP(1)
-    : dec(0);
+const revenue = dec(netYield).mul(dec(salesPriceAtTime));
+const grossProfit = revenue.minus(totalCost);
+const reserve = dec(netYield).mul(dec(maintenanceReserveAtTime));
+const netProfit = grossProfit.minus(reserve);
+const marginPercent = revenue.gt(0) ? netProfit.div(revenue).mul(100).toDP(1) : dec(0);
 
   return {
     bricksProduced,
