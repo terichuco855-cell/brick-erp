@@ -11,7 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { X } from 'lucide-react';
+import { 
+  Popover, 
+  PopoverContent, 
+  PopoverTrigger 
+} from '@/components/ui/popover'; // Add this import
+import { X, Filter, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Props {
@@ -29,114 +34,99 @@ export function FilterBar({
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [filtersOpen, setFiltersOpen] = useState(false);
-
-  // Local state for instant updates (optional)
+  
   const [startDate, setStartDate] = useState(currentStartDate);
   const [endDate, setEndDate] = useState(currentEndDate);
   const [workerId, setWorkerId] = useState(currentWorkerId);
 
+  const hasActiveFilters = currentStartDate || currentEndDate || (currentWorkerId && currentWorkerId !== 'all');
+
   const applyFilters = () => {
     const params = new URLSearchParams(searchParams.toString());
-
-    if (startDate) params.set('startDate', startDate);
-    else params.delete('startDate');
-
-    if (endDate) params.set('endDate', endDate);
-    else params.delete('endDate');
-
-    if (workerId && workerId !== 'all') params.set('workerId', workerId);
-    else params.delete('workerId');
-
+    startDate ? params.set('startDate', startDate) : params.delete('startDate');
+    endDate ? params.set('endDate', endDate) : params.delete('endDate');
+    (workerId && workerId !== 'all') ? params.set('workerId', workerId) : params.delete('workerId');
     router.push(`?${params.toString()}`);
-    setFiltersOpen(false); // close on mobile after apply
   };
 
   const clearFilters = () => {
     setStartDate('');
     setEndDate('');
     setWorkerId('');
-    router.push(''); // remove all params
-    setFiltersOpen(false);
+    router.push('?'); // Clear URL params
   };
 
-  const hasActiveFilters =
-    currentStartDate ||
-    currentEndDate ||
-    (currentWorkerId && currentWorkerId !== 'all');
-
   return (
-    <div>
-      {/* Mobile toggle button */}
-      <div className="sm:hidden mb-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setFiltersOpen(!filtersOpen)}
-        >
-          Filters {hasActiveFilters && '(active)'}
-        </Button>
-      </div>
-
-      {/* Filter panel – visible on desktop, collapsible on mobile */}
-      <div
-        className={cn(
-          'flex flex-col sm:flex-row gap-3 items-start sm:items-center p-4 bg-muted/30 rounded-lg',
-          'sm:flex', // always show on sm+
-          filtersOpen ? 'block' : 'hidden' // toggle on mobile
-        )}
-      >
-        <div className="w-full sm:w-auto">
-          <label className="text-xs text-muted-foreground">Start Date</label>
-          <Input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="mt-1"
-          />
-        </div>
-
-        <div className="w-full sm:w-auto">
-          <label className="text-xs text-muted-foreground">End Date</label>
-          <Input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="mt-1"
-          />
-        </div>
-
-        <div className="w-full sm:w-48">
-          <label className="text-xs text-muted-foreground">Worker</label>
-          <Select value={workerId} onValueChange={setWorkerId}>
-            <SelectTrigger className="mt-1">
-              <SelectValue placeholder="All workers" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All workers</SelectItem>
-              {workers.map((w) => (
-                <SelectItem key={w.id} value={w.id}>
-                  {w.name || w.id}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex gap-2 self-end sm:self-center mt-2 sm:mt-0">
-          <Button size="sm" onClick={applyFilters}>
-            Apply
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={clearFilters}
-            disabled={!hasActiveFilters}
+    <div className="flex items-center gap-2">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className={cn(
+              "h-9 gap-2 border-dashed",
+              hasActiveFilters && "border-brand-clay-400 bg-brand-clay-400/5 text-brand-clay-400"
+            )}
           >
-            <X className="h-4 w-4 mr-1" /> Clear
+            <Filter className="h-3.5 w-3.5" />
+            <span>Filters</span>
+            {hasActiveFilters && (
+               <span className="ml-1 px-1.5 py-0.5 rounded-full bg-brand-clay-400 text-white text-[10px]">
+                 Active
+               </span>
+            )}
+            <ChevronDown className="h-3 w-3 opacity-50" />
           </Button>
-        </div>
-      </div>
+        </PopoverTrigger>
+        
+        <PopoverContent className="w-80 p-5" align="start">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="font-bold text-sm">Filter Records</h4>
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs">
+                Reset
+              </Button>
+            </div>
+            
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <label className="text-[11px] font-bold uppercase text-muted-foreground">Date Range</label>
+                <div className="flex items-center gap-2">
+                  <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-8 text-xs" />
+                  <span className="text-muted-foreground">-</span>
+                  <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-8 text-xs" />
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <label className="text-[11px] font-bold uppercase text-muted-foreground">Worker</label>
+                <Select value={workerId} onValueChange={setWorkerId}>
+                  <SelectTrigger className="h-9">
+                    <SelectValue placeholder="All workers" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All workers</SelectItem>
+                    {workers.map((w) => (
+                      <SelectItem key={w.id} value={w.id}>{w.name || 'Unnamed'}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <Button className="w-full bg-brand-clay-400 hover:bg-brand-clay-500" onClick={applyFilters}>
+              Apply Filters
+            </Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+
+      {/* Quick Clear Button (Visible only when filters active) */}
+      {hasActiveFilters && (
+        <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 px-2 text-muted-foreground hover:text-foreground">
+          <X className="h-3 w-3 mr-1" /> Clear
+        </Button>
+      )}
     </div>
   );
 }
