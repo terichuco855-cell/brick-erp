@@ -121,7 +121,7 @@ export function FilterBar({
       {/* Quick Clear Button (Visible only when filters active) */}
       {hasActiveFilters && (
         <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 px-2 text-muted-foreground hover:text-foreground">
-          <X className="h-3 w-3 mr-1" /> Clear
+          <X className="h-3 w-3 mr-1" /> 
         </Button>
       )}
     </div>

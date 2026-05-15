@@ -96,7 +96,7 @@ export async function createProductionLog(
 
   // 5. Perform update in a transaction
   try {
-    await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       // Deduct raw materials
       if (cementUsed > 0) {
         await tx.inventory.update({
@@ -164,13 +164,11 @@ export async function createProductionLog(
           }),
         },
       });
+       return { success: true, netYield };
     });
 
-    revalidatePath('/production');
-    revalidatePath('/dashboard');
-    revalidatePath('/inventory');
-
-    return { success: true, netYield };
+     revalidatePath('/production');
+     return result;
   } catch (error: any) {
     console.error('createProductionLog error:', error);
     return { success: false, error: 'Database error. Production not saved.' };

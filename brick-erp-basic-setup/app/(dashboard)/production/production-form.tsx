@@ -123,26 +123,34 @@ export function ProductionForm({ settings, workers, currentUser }: Props) {
   const batchResult = getBatchResult();
 
   const onSubmit = async (data: ProductionFormValues) => {
-    setIsSubmitting(true);
-    try {
-      const result = await createProductionLog(data);
-      alert("Production log created successfully!")
-      if (result.success) {
-        toast.success(
-          `Production logged. Net yield: ${result.netYield} bricks.`
-        );
-        setOpen(false);
-        form.reset();
-      } else {
-        alert("Failed to create production log: "  );
-        toast.error(result.error || 'Failed to log production.');
-      }
-    } catch (err) {
-      toast.error('An unexpected error occurred.');
-    } finally {
-      setIsSubmitting(false);
+  setIsSubmitting(true);
+  
+  try {
+    const result = await createProductionLog(data);
+    
+    if (result.success) {
+      // 1. First, tell the user it worked (Immediate feedback)
+      toast.success("Success", {
+        description: `Logged ${result.netYield} bricks.`
+      });
+
+      // 2. Clear the form data
+      form.reset();
+
+      // 3. Close the dialog
+      setOpen(false);
+
+      // NO need for router.refresh() because revalidatePath 
+      // in your server action handles it automatically.
+    } else {
+      toast.error(result.error);
     }
-  };
+  } catch (err) {
+    toast.error("Something went wrong");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
